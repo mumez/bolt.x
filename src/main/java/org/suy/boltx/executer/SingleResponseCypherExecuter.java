@@ -1,5 +1,6 @@
 package org.suy.boltx.executer;
 
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
@@ -22,10 +23,17 @@ public class SingleResponseCypherExecuter extends BaseCypherExecuter {
 
   @Override
   public void execute(Message<JsonObject> msg){
-    try ( Session session = driver.session() )
-    {
+    vertx.<JsonObject>executeBlocking(future -> {
+      basicExecute(msg, future);
+    }, false, res -> {
+      msg.reply(res.result());
+    });
+  }
+
+  protected void basicExecute(Message<JsonObject> msg, Future<JsonObject> future) {
+    try ( Session session = driver.session() ) {
       StatementResult sr = processRequest(msg, session);
-      msg.reply(converter.convert(sr));
+      future.complete(converter.convert(sr));
     }
   }
 

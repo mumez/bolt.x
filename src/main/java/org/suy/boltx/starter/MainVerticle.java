@@ -14,8 +14,7 @@ import io.vertx.ext.eventbus.bridge.tcp.TcpEventBusBridge;
 
 import org.neo4j.driver.v1.*;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
-import org.suy.boltx.executer.CypherExecuter;
-import org.suy.boltx.executer.SingleResponseCypherExecuter;
+import org.suy.boltx.executer.*;
 
 public class MainVerticle extends AbstractVerticle {
 
@@ -109,7 +108,13 @@ public class MainVerticle extends AbstractVerticle {
         .addInboundPermitted(new PermittedOptions().setAddress("executeAndReturnCypher"))
         .addOutboundPermitted(new PermittedOptions().setAddress("executeAndReturnCypher"))
         .addInboundPermitted(new PermittedOptions().setAddress("executeCypher"))
-        .addOutboundPermitted(new PermittedOptions().setAddress("returnCypher")));
+        .addInboundPermitted(new PermittedOptions().setAddress("executeCyphers"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("returnCypher"))
+        .addInboundPermitted(new PermittedOptions().setAddress("writeAndReturnCypher"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("writeAndReturnCypher"))
+        .addInboundPermitted(new PermittedOptions().setAddress("bulkWriteAndReturnCypher"))
+        .addOutboundPermitted(new PermittedOptions().setAddress("bulkWriteAndReturnCypher"))
+    );
   }
 
   protected void setupConsumers() {
@@ -122,5 +127,21 @@ public class MainVerticle extends AbstractVerticle {
       CypherExecuter executer = new CypherExecuter(driver, vertx);
       executer.execute(msg);
     });
+
+    vertx.eventBus().consumer("executeCyphers", (Message<JsonObject> msg) -> {
+      CypherExecuter executer = new BulkCypherExecuter(driver, vertx);
+      executer.execute(msg);
+    });
+
+    vertx.eventBus().consumer("writeAndReturnCypher", (Message<JsonObject> msg) -> {
+      WriteCypherExecuter executer = new WriteCypherExecuter(driver, vertx);
+      executer.execute(msg);
+    });
+
+    vertx.eventBus().consumer("bulkWriteAndReturnCypher", (Message<JsonObject> msg) -> {
+      BulkWriteCypherExecuter executer = new BulkWriteCypherExecuter(driver, vertx);
+      executer.execute(msg);
+    });
+
   }
 }

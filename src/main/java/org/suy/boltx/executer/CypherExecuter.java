@@ -1,7 +1,6 @@
 package org.suy.boltx.executer;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
 import org.neo4j.driver.v1.Driver;
@@ -23,26 +22,35 @@ public class CypherExecuter extends BaseCypherExecuter {
   }
 
   public void execute(Message<JsonObject> msg){
-    try ( Session session = driver.session() )
-    {
-      StatementResult sr = processRequest(msg, session);
-      this.returnResultFrom(msg.body(), sr);
-    }
+    vertx.<StatementResult>executeBlocking(future -> {
+      try ( Session session = driver.session() )
+      {
+        StatementResult sr = processRequest(msg, session);
+        future.complete(sr);
+      }
+    }, false, res -> {
+      this.returnResultFrom(msg.body(), res.result());
+    });
   }
 
   protected void returnResultFrom(JsonObject messageBody, StatementResult sr){
-    EventBus eb = this.vertx.eventBus();
-    Integer counter = 0;
+    vertx.<StatementResult>executeBlocking(future -> {
+      basicReturnResultFrom(messageBody, sr);
+      future.complete();
+    }, true, res -> {
+    });
+  }
+
+  protected void basicReturnResultFrom(JsonObject messageBody, StatementResult sr) {
     while(sr.hasNext()){
       Record record = sr.next();
       JsonObject replyObj = new JsonObject();
       replyObj.put("requestId", messageBody.getString("requestId"));
       replyObj.put("data", this.converter.convert(record));
-      replyObj.put("counter", counter++);
       if(!sr.hasNext()){
         replyObj.put("end", true);
       }
-      eb.publish("returnCypher", replyObj);
+      vertx.eventBus().publish("returnCypher", replyObj);
     }
   }
 
