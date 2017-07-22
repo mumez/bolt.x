@@ -13,6 +13,8 @@ import org.neo4j.driver.v1.exceptions.Neo4jException;
  */
 public class BulkCypherExecuter extends CypherExecuter {
 
+  protected String prevStatement = "";
+
   public BulkCypherExecuter(Driver driver, Vertx vertx){
     super(driver, vertx);
   }
@@ -21,7 +23,7 @@ public class BulkCypherExecuter extends CypherExecuter {
   public void execute(Message<JsonObject> msg){
     vertx.<JsonObject>executeBlocking(future -> {
       basicExecute(msg, future);
-    }, true, res -> {
+    }, false, res -> {
       this.returnBulkResultFrom(msg.body(), res.result());
     });
   }
@@ -34,9 +36,7 @@ public class BulkCypherExecuter extends CypherExecuter {
         JsonObject body = msg.body();
         JsonArray statements = body.getJsonArray("statements");
         statements.forEach(each -> {
-          if(each instanceof JsonObject) {
-            this.processStatement((JsonObject) each, tx);
-          }
+          this.processStatement((JsonObject) each, tx);
         });
         future.complete(TrueValue);
       } catch (Neo4jException ex) {
@@ -62,12 +62,16 @@ public class BulkCypherExecuter extends CypherExecuter {
 
   protected StatementResult basicProcessStatement(JsonObject statementJson, Transaction transaction) {
     JsonObject params = statementJson.getJsonObject("parameters");
+    String statement = statementJson.getString("statement", prevStatement);
+
     StatementResult sr;
     if(params==null){
-      sr = transaction.run(statementJson.getString("statement"));
+      sr = transaction.run(statement);
     } else {
-      sr = transaction.run(statementJson.getString("statement"), params.getMap());
+      sr = transaction.run(statement, params.getMap());
     }
+    prevStatement = statement;
     return sr;
   }
+
 }

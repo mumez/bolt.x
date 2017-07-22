@@ -20,7 +20,7 @@ public class WriteCypherExecuter extends BaseCypherExecuter {
   public void execute(Message<JsonObject> msg){
     vertx.<JsonObject>executeBlocking(future -> {
       basicExecute(msg, future);
-    }, true, res -> {
+    }, false, res -> {
       msg.reply(res.result());
     });
   }
