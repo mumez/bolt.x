@@ -26,17 +26,19 @@ public class WriteCypherExecuter extends BaseCypherExecuter {
   }
 
   protected void basicExecute(Message<JsonObject> msg, Future<JsonObject> future) {
+    JsonObject bulkResult;
     try (Session session = driver.session())
     {
       try (Transaction tx = session.beginTransaction())
       {
         StatementResult sr = processRequest(msg, tx);
         tx.success();
-        future.complete(TrueValue);
+        bulkResult = TrueValue;
       } catch (Neo4jException ex) {
-        future.complete(FalseValue);
+        bulkResult = FalseValue;
       }
     }
+    future.complete(bulkResult);
   }
 
   protected StatementResult processRequest(Message<JsonObject> msg, Transaction transaction) {

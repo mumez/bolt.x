@@ -29,6 +29,7 @@ public class BulkCypherExecuter extends CypherExecuter {
   }
 
   protected void basicExecute(Message<JsonObject> msg,  Future<JsonObject> future){
+    JsonObject bulkResult;
     try (Session session = driver.session())
     {
       try (Transaction tx = session.beginTransaction())
@@ -38,11 +39,12 @@ public class BulkCypherExecuter extends CypherExecuter {
         statements.forEach(each -> {
           this.processStatement((JsonObject) each, tx);
         });
-        future.complete(TrueValue);
+        bulkResult = TrueValue;
       } catch (Neo4jException ex) {
-        future.complete(FalseValue);
+        bulkResult = FalseValue;
       }
     }
+    future.complete(bulkResult);
   }
 
   protected void processStatement(JsonObject statementJson, Transaction transaction) {
