@@ -36,6 +36,7 @@ public class WriteCypherExecuter extends BaseCypherExecuter {
         bulkResult = TrueValue;
       } catch (Neo4jException ex) {
         bulkResult = FalseValue;
+        log.error(ex);
       }
     }
     future.complete(bulkResult);
@@ -52,6 +53,5 @@ public class WriteCypherExecuter extends BaseCypherExecuter {
     }
     return sr;
   }
-
 
 }

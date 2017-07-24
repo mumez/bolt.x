@@ -46,6 +46,7 @@ public class BulkWriteCypherExecuter extends BulkCypherExecuter {
       } catch (Neo4jException ex) {
         bulkResult = FalseValue;
         msg.reply(bulkResult);
+        log.error(ex);
       }
     }
     future.complete(bulkResult);

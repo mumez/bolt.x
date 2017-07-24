@@ -23,7 +23,7 @@ public class BulkCypherExecuter extends CypherExecuter {
   public void execute(Message<JsonObject> msg){
     vertx.<JsonObject>executeBlocking(future -> {
       basicExecute(msg, future);
-    }, false, res -> {
+    }, true, res -> {
       this.returnBulkResultFrom(msg.body(), res.result());
     });
   }
@@ -42,6 +42,7 @@ public class BulkCypherExecuter extends CypherExecuter {
         bulkResult = TrueValue;
       } catch (Neo4jException ex) {
         bulkResult = FalseValue;
+        log.error(ex);
       }
     }
     future.complete(bulkResult);
