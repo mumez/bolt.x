@@ -12,7 +12,7 @@
   <properties>
     <vertx.version>3.4.2</vertx.version>
     <main.verticle>org.suy.boltx.starter.MainVerticle</main.verticle>
-    <neo4j.version>3.2.1</neo4j.version>
+    <neo4j.version>3.5.0</neo4j.version>
     <neo4j.driver.version>1.4.0</neo4j.driver.version>
   </properties>
 
